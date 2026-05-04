@@ -4,6 +4,8 @@ import thejoker as tj
 from astropy.table import QTable, Table, vstack
 from astropy.time import Time
 import os
+import traceback
+
 
 #Set paths and get files, just using Ella's for now because I have no gotten these files locally yet
 workpath = "/data2/labs/douglste-laf-lab/mathewea/200.0M_new"
@@ -29,6 +31,11 @@ mode1_P = []
 mode2_P = [] 
 mode1_count = []
 mode2_count = []
+
+# Pick 10 IDs to test
+failed_kmodal_ids = []
+max_failed_kmodal_ids = 10
+
 
 # Pulls gaia IDs
 new_ids_6811 = new_6811["GAIAEDR3_ID"]
@@ -101,10 +108,22 @@ for idnum in idlist["GAIAEDR3_ID"]:
 
             # If the bimodal check fails then record the failure
             except Exception as exc:
-                print(f"{idnum}: is_P_Kmodal failed: {exc}")
+                failed_kmodal_ids.append(idnum)
+            
+                print(f"\n{idnum}: is_P_Kmodal failed")
+                print(f"Error message: {exc}")
+                traceback.print_exc()
+                print()
+            
                 bi = -1
                 modes = [np.nan, np.nan]
                 counts = [-1, -1]
+            
+                if len(failed_kmodal_ids) >= max_failed_kmodal_ids:
+                    print("Collected 10 is_P_Kmodal failures:")
+                    print(failed_kmodal_ids)
+                    raise SystemExit("Stopping after 10 IDs are collected")
+
 
         try: # Takes one sample and measures the largest gap in the phase coverage
             one_sample = joker_samples[:1]
