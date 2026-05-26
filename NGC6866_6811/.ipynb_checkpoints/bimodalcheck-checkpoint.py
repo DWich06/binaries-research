@@ -4,6 +4,8 @@ import thejoker as tj
 from astropy.table import QTable, Table, vstack
 from astropy.time import Time
 import os
+import traceback
+
 
 #Set paths and get files, just using Ella's for now because I have no gotten these files locally yet
 workpath = "/data2/labs/douglste-laf-lab/mathewea/200.0M_new"
@@ -26,9 +28,14 @@ numRVs = []
 maxgap = []
 phasecov = []
 mode1_P = []
-mode2_P = [] 
+mode2_P = []
 mode1_count = []
 mode2_count = []
+
+# Pick 10 IDs to test
+failed_kmodal_ids = []
+max_failed_kmodal_ids = 10
+
 
 # Pulls gaia IDs
 new_ids_6811 = new_6811["GAIAEDR3_ID"]
@@ -39,7 +46,7 @@ for idnum in idlist["GAIAEDR3_ID"]:
     datamatched6811 = new_6811[idnum == new_ids_6811]
     datamatched6866 = new_6866[idnum == new_ids_6866]
     matched = vstack([datamatched6811, datamatched6866])
-    
+
     RV = len(matched)
 
     # Stars with fewer than 3 RVs means the constraints are weak
@@ -75,6 +82,11 @@ for idnum in idlist["GAIAEDR3_ID"]:
             numsamples = len(joker_samples)
             mcmc_check = 1
 
+        # Fix ln_prior if it was read as a structured column instead of a float column
+        if joker_samples.tbl["ln_prior"].dtype.names is not None:
+            print(f"{idnum}: fixing structured ln_prior column")
+            joker_samples.tbl["ln_prior"] = joker_samples.tbl["ln_prior"]["ln_prior"]
+
         # Time between observation dates
         dt = t1[1:] - t1[:-1]
 
@@ -87,24 +99,38 @@ for idnum in idlist["GAIAEDR3_ID"]:
         else:
             uni = 0
 
-            try: # Checks if it is bimodal
-                is_bi, modes, counts = tj.is_P_Kmodal(
-                    joker_samples,
-                    data,
-                    n_clusters=2,
-                )
-
-                if is_bi:
-                    bi = 1
-                else:
-                    bi = 0
-
-            # If the bimodal check fails then record the failure
-            except Exception as exc:
-                print(f"{idnum}: is_P_Kmodal failed: {exc}")
+            if len(joker_samples) < 10:
+                print(f"{idnum}: skipping is_P_Kmodal, only {len(joker_samples)} Joker samples")
                 bi = -1
                 modes = [np.nan, np.nan]
                 counts = [-1, -1]
+            
+            else:
+                try: # Checks if it is bimodal
+                    is_bi, modes, counts = tj.is_P_Kmodal(
+                        joker_samples,
+                        data,
+                        n_clusters=2,
+                    )
+            
+                    if is_bi:
+                        bi = 1
+                    else:
+                        bi = 0
+            
+                except Exception as exc:
+                    failed_kmodal_ids.append(idnum)
+            
+                    print(f"\n{idnum}: is_P_Kmodal failed")
+                    print(f"Error message: {exc}")
+                    traceback.print_exc()
+                    print()
+            
+                    bi = -1
+                    modes = [np.nan, np.nan]
+                    counts = [-1, -1]
+
+
 
         try: # Takes one sample and measures the largest gap in the phase coverage
             one_sample = joker_samples[:1]
@@ -126,7 +152,7 @@ for idnum in idlist["GAIAEDR3_ID"]:
             mode1 = modes[0]
             if hasattr(mode1, "to_value"):
                 mode1 = mode1.to_value(u.day)
-            mode1 = float(mode1)
+            mode1 = float(np.ravel(mode1)[0])
         except Exception:
             mode1 = np.nan
 
@@ -134,7 +160,7 @@ for idnum in idlist["GAIAEDR3_ID"]:
             mode2 = modes[1]
             if hasattr(mode2, "to_value"):
                 mode2 = mode2.to_value(u.day)
-            mode2 = float(mode2)
+            mode2 = float(np.ravel(mode2)[0])
         except Exception:
             mode2 = np.nan
 
@@ -186,4 +212,3 @@ datatable["phase_coverage"] = phasecov
 # Writes final csc
 datatable.write("bimodalcheck_200M_phase.csv", format="csv", overwrite=True)
 print("wrote bimodalcheck_200M_phase.csv")
-
