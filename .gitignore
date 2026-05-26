@@ -1,5 +1,6 @@
+# Ignore data and file metadata formats
 *.csv
-*.fits
-*.h5
 *.hdf5
-*Zone.Identifier
+*.h5
+*.fits
+*:Zone.Identifier

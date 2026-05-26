@@ -7,7 +7,7 @@ import os
 import traceback
 
 
-#Set paths and get files, just using Ella's for now because I have not gotten these files locally yet
+#Set paths and get files, just using Ella's for now because I have no gotten these files locally yet
 workpath = "/data2/labs/douglste-laf-lab/mathewea/200.0M_new"
 idlist = QTable.read("/data2/labs/douglste-laf-lab/mathewea/Summer-Research/GAIADR3_IDs.csv")
 
