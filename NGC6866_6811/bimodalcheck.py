@@ -8,11 +8,11 @@ import traceback
 
 
 #Set paths and get files, just using Ella's for now because I have no gotten these files locally yet
-workpath = "/data2/labs/douglste-laf-lab/mathewea/200.0M_new"
+workpath = "/data/labs/douglste-laf-lab/wichmand/stardata/200.0M_jitter"
 idlist = QTable.read("/data2/labs/douglste-laf-lab/mathewea/Summer-Research/GAIADR3_IDs.csv")
 
-new_6866 = QTable.read("/data2/labs/douglste-laf-lab/mathewea/rcat_ngc6866_v0.fits")
-new_6811 = QTable.read("/data2/labs/douglste-laf-lab/mathewea/rcat_ngc6811_v0.fits")
+new_6866 = QTable.read("/data/labs/douglste-laf-lab/wichmand/stardata/rcat_ngc6866_v0.fits")
+new_6811 = QTable.read("/data/labs/douglste-laf-lab/wichmand/stardata/rcat_ngc6811_v0.fits")
 
 # Creates an empty table for outputs
 datatable = Table()
@@ -65,8 +65,8 @@ for idnum in idlist["GAIAEDR3_ID"]:
     )
 
     # Paths for TheJoker output files
-    rejection_file = f"{workpath}/{idnum}/rejection_samples_200.0M_{idnum}_new.hdf5"
-    mcmc_file = f"{workpath}/{idnum}/rejection_samples_MCMC_200.0M_{idnum}_new.hdf5"
+    rejection_file = f"{workpath}/{idnum}/rejection_samples_200M_jitter_{idnum}.hdf5"
+    mcmc_file = f"{workpath}/{idnum}/rejection_samples_MCMC_adapt_full_200M_jitter_{idnum}.hdf5"
 
     # Only processes the star if the rejection sample file exists, adds the ID to the table, counts rejection sample and records that it isnt MCMC unless proven otherwise
     if os.path.exists(rejection_file):
@@ -101,10 +101,10 @@ for idnum in idlist["GAIAEDR3_ID"]:
 
             if len(joker_samples) < 10:
                 print(f"{idnum}: skipping is_P_Kmodal, only {len(joker_samples)} Joker samples")
-                bi = -1
+                bi = -2
                 modes = [np.nan, np.nan]
                 counts = [-1, -1]
-            
+
             else:
                 try: # Checks if it is bimodal
                     is_bi, modes, counts = tj.is_P_Kmodal(
@@ -112,20 +112,20 @@ for idnum in idlist["GAIAEDR3_ID"]:
                         data,
                         n_clusters=2,
                     )
-            
+
                     if is_bi:
                         bi = 1
                     else:
                         bi = 0
-            
+
                 except Exception as exc:
                     failed_kmodal_ids.append(idnum)
-            
+
                     print(f"\n{idnum}: is_P_Kmodal failed")
                     print(f"Error message: {exc}")
                     traceback.print_exc()
                     print()
-            
+
                     bi = -1
                     modes = [np.nan, np.nan]
                     counts = [-1, -1]
@@ -210,5 +210,5 @@ datatable["max_phase_gap"] = maxgap
 datatable["phase_coverage"] = phasecov
 
 # Writes final csc
-datatable.write("bimodalcheck_200M_phase.csv", format="csv", overwrite=True)
-print("wrote bimodalcheck_200M_phase.csv")
+datatable.write("bimodalcheck_200M_jitter_adapt_full.csv", format="csv", overwrite=True)
+print("wrote bimodalcheck_200M_jitter_adapt_full.csv")

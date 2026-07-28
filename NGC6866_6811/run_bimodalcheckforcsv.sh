@@ -5,10 +5,9 @@
 #SBATCH --time=04:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=16G
+#SBATCH --mem=64G
 
 source ~/anaconda3/etc/profile.d/conda.sh
 conda activate thejoker
 
-python bimodalcheck.py
-
+python bimodalcheckforcsv.py

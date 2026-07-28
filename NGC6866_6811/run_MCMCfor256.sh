@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH --job-name=mcmc
+#SBATCH --partition=compute,douglste-laf-lab,unowned
+#SBATCH --output=/data/labs/douglste-laf-lab/wichmand/logs/mcmc256/mcmc256_adapt_full/mcmc_%A_%a.out
+#SBATCH --error=/data/labs/douglste-laf-lab/wichmand/logs/mcmc256/mcmc256_adapt_full/mcmc_%A_%a.err
+#SBATCH --time=02:00:00
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=1
+#SBATCH --array=15
+
+source ~/anaconda3/etc/profile.d/conda.sh
+conda activate thejoker
+
+python MCMCfor256.py

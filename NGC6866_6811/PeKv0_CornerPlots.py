@@ -5,18 +5,20 @@ import matplotlib.pyplot as plt
 import os
 from astropy.table import Table, QTable, vstack
 
-workpath = "/data2/labs/douglste-laf-lab/mathewea/200.0M_new"
+stardata = "/data/labs/douglste-laf-lab/wichmand/stardata"
 
-outdir = "plots/PeKv0_CornerPlots"
+workpath = f"{stardata}/200.0M_new"
+
+outdir = "/data/labs/douglste-laf-lab/wichmand/plots/PeKv0_CornerPlots"
 os.makedirs(outdir, exist_ok=True)
 
 bimodal_table = Table.read(
-    "bimodalcheck_200M_phase.csv",
+    f"{stardata}/bimodalcheck_200M_phase.csv",
     format="csv"
 )
 
-cat_6811 = QTable.read("rcat_ngc6811_v0.fits")
-cat_6866 = QTable.read("rcat_ngc6866_v0.fits")
+cat_6811 = QTable.read(f"{stardata}/rcat_ngc6811_v0.fits")
+cat_6866 = QTable.read(f"{stardata}/rcat_ngc6866_v0.fits")
 catalog = vstack([cat_6811, cat_6866])
 
 ids_6811 = set(cat_6811["GAIAEDR3_ID"])
@@ -43,13 +45,15 @@ def make_corner_plot(star_id):
 
     mcmc_file = (
         f"{workpath}/{star_id}/"
-        f"rejection_samples_MCMC_200.0M_{star_id}_new.hdf5"
+        f"rejection_samples_MCMC_adapt_full_200.0M_{star_id}_new.hdf5"
     )
 
     if os.path.exists(mcmc_file):
         sample_file = mcmc_file
+        filetype = "MCMC_adapt_full"
     elif os.path.exists(rejection_file):
         sample_file = rejection_file
+        filetype = "rejection"
     else:
         print(f"[{star_id}] No sample file, skipping")
         return
@@ -86,7 +90,7 @@ def make_corner_plot(star_id):
         b = row["bimodal"][0]
 
         unimodal_val = "Yes" if u == 1 else "No" if u == 0 else "Unsure"
-        bimodal_val = "Yes" if b == 1 else "No" if b == 0 else "Unsure"
+        bimodal_val = "Yes" if b == 1 else "No" if b == 0 else "is P kmodal exception" if b == -1 else "Less than 10 samples" if b == -2 else "Error"
 
 
     P = samples["P"].to_value("day")
@@ -163,7 +167,7 @@ def make_corner_plot(star_id):
         f"Cluster: {cluster_name}\n"
         f"N RV data points: {nrv_val}\n"
         f"N samples: {len(samples)}\n"
-        f"Ran MCMC: {'Yes' if os.path.exists(mcmc_file) else 'No'}\n"
+        f"Sample file: {filetype}\n"
         f"Unimodal: {unimodal_val}\n"
         f"Bimodal: {bimodal_val}\n"
         f"Member: {MemBool_val}\n"
@@ -186,7 +190,7 @@ def make_corner_plot(star_id):
     )
 
 
-    outname = f"{outdir}/{star_id}_PeKv0_corner.png"
+    outname = f"{outdir}/{star_id}_{filetype}_PeKv0_corner.png"
     fig.savefig(outname, dpi=200, bbox_inches="tight")
     plt.close(fig)
     del fig
