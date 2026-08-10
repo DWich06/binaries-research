@@ -1,9 +1,0 @@
-WARNING: VerifyWarning: It is strongly recommended that column names contain only upper and lower-case ASCII letters, digits, or underscores for maximum compatibility with other software (got '[Fe/H]'). [astropy.io.fits.column]
-WARNING: VerifyWarning: It is strongly recommended that column names contain only upper and lower-case ASCII letters, digits, or underscores for maximum compatibility with other software (got '[Fe/H]_err'). [astropy.io.fits.column]
-WARNING: VerifyWarning: It is strongly recommended that column names contain only upper and lower-case ASCII letters, digits, or underscores for maximum compatibility with other software (got '[Fe/H]_lerr'). [astropy.io.fits.column]
-WARNING: VerifyWarning: It is strongly recommended that column names contain only upper and lower-case ASCII letters, digits, or underscores for maximum compatibility with other software (got '[Fe/H]_uerr'). [astropy.io.fits.column]
-WARNING: VerifyWarning: It is strongly recommended that column names contain only upper and lower-case ASCII letters, digits, or underscores for maximum compatibility with other software (got '[a/Fe]'). [astropy.io.fits.column]
-WARNING: VerifyWarning: It is strongly recommended that column names contain only upper and lower-case ASCII letters, digits, or underscores for maximum compatibility with other software (got '[a/Fe]_err'). [astropy.io.fits.column]
-WARNING: VerifyWarning: It is strongly recommended that column names contain only upper and lower-case ASCII letters, digits, or underscores for maximum compatibility with other software (got '[a/Fe]_lerr'). [astropy.io.fits.column]
-WARNING: VerifyWarning: It is strongly recommended that column names contain only upper and lower-case ASCII letters, digits, or underscores for maximum compatibility with other software (got '[a/Fe]_uerr'). [astropy.io.fits.column]
-Done! Saved unimodalcheck_200M_phase.csv

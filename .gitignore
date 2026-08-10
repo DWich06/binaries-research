@@ -4,3 +4,5 @@
 *.h5
 *.fits
 *:Zone.Identifier
+*.png
+**/.ipynb_checkpoints/

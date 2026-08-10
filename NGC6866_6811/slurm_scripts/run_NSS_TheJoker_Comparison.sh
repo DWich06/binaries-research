@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --job-name=mcmcdata
+#SBATCH --partition=compute,douglste-laf-lab,unowned
+#SBATCH --output=/data/labs/douglste-laf-lab/wichmand/logs/comparison_%j.out
+#SBATCH --error=/data/labs/douglste-laf-lab/wichmand/logs/comparison_%j.err
+#SBATCH --time=00:30:00
+#SBATCH --mem=8G
+#SBATCH --cpus-per-task=1
+
+source ~/anaconda3/etc/profile.d/conda.sh
+conda activate thejoker
+
+python NSS_TheJoker_Comparison.py
