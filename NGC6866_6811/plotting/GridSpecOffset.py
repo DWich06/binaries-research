@@ -14,7 +14,7 @@ import traceback
 
 # Data paths
 stardata = "/data/labs/douglaslab/wichmand/stardata"
-outdir = "/data/labs/douglaslab/wichmand/plots/GridSpecPlots"
+outdir = "/data/labs/douglaslab/wichmand/plots/GridSpecOffset"
 os.makedirs(outdir, exist_ok=True)
 
 
@@ -23,18 +23,18 @@ cat_6811 = QTable.read(f"{stardata}/star_catalogs/rcat_ngc6811_v0.fits")
 cat_6866 = QTable.read(f"{stardata}/star_catalogs/rcat_ngc6866_v0.fits")
 catalog = vstack([cat_6811, cat_6866])
 
-# APOGEE RV catalog for two-instrument offset runs
+# APOGEE
 apogee_file = f"{stardata}/star_catalogs/apogee_radial_velocity.csv"
-apogee_catalog = None  # Loaded only when an offset run is plotted
+apogee_catalog = None
 
 
-# Corner Plot Info
+# Info for the corner plot
 levelvalues = [0.196, 0.683, 0.954]
 binvalues = 20
 smooth1dvalues = 1.0
 smoothvalues = 1.0
 
-# All joker run definitions
+# All possible joker runs
 
 jokerruns = {
     "200M": {
@@ -90,7 +90,8 @@ jokerruns = {
         "prior_size": "400M",
         "sample_type": "Rejection + jitter",
     },
-    # Combined Hectochelle + APOGEE runs (with fitted dv0_1)
+
+    # RV offset runs
     "200M_jitter_offset": {
         "workpath": f"{stardata}/joker_runs/200.0M_jitter",
         "filename": "rejection_samples_200M_jitter_offset_{id}.hdf5",
@@ -310,8 +311,8 @@ def get_rvdata(star_id, has_offset=False):
     if not has_offset:
         return data
 
-    # Preserve the instrument ordering used for the offset fits:
-    # Hectochelle is dataset 0, APOGEE is dataset 1 (dv0_1).
+
+    # Avoid loading the APOGEE catalog for every run,  Hectochelle is dataset 0 and APOGEE is dataset 1 (dv0_1).
     global apogee_catalog
     if apogee_catalog is None:
         apogee_catalog = Table.read(apogee_file, format="csv")
@@ -320,7 +321,7 @@ def get_rvdata(star_id, has_offset=False):
         np.asarray(apogee_catalog["GAIAEDR3_ID"], dtype=str) == str(star_id)
     ]
     mjd = np.asarray(apogee_rows["mjd"], dtype=float)
-    rv = np.asarray(apogee_rows["v_rel"], dtype=float)
+    rv = np.asarray(apogee_rows["v_rad"], dtype=float)
     err = np.asarray(apogee_rows["e_v_rel"], dtype=float)
     flags = np.asarray(apogee_rows["spectrum_flags"])
     good = (np.isfinite(mjd) & np.isfinite(rv) & np.isfinite(err)
@@ -404,9 +405,6 @@ def plot_rv(ax, star_id, samples, has_jitter=False, jitter_multiplier=1.0, has_o
     try:
         tj.plot_rv_curves(samples, data=data, ax=ax)
 
-        # The original custom jitter-bar overlay expects a single RVData.
-        # Leave it unchanged for original runs; The Joker handles both
-        # instrument datasets automatically for offset runs.
         if has_jitter and not has_offset and "s" in samples.par_names and len(samples) > 0:
 
             jitter = float(np.median(samples["s"].to_value(u.km / u.s))) * jitter_multiplier
@@ -710,10 +708,6 @@ def make_gridspec_plot(star_id, run_name):
         zorder=100,
     )
 
-    #fig.suptitle(
-     #   f"Gaia ID: {star_id} | {run_name} | N samples = {len(samples)}",
-      #  fontsize=16,
-    #)
 
     run_outdir = os.path.join(outdir, run_name)
     os.makedirs(run_outdir, exist_ok=True)
@@ -728,8 +722,6 @@ def make_gridspec_plot(star_id, run_name):
     print(f"{star_id} {run_name}: saved {outname}", flush=True)
 
 
-# Offset-only job discovery: no external gridspec_star_runs.txt needed.
-# Both known Firebird directory layouts are supported.
 def discover_offset_jobs():
     jobs = set()
     for run_name in ("200M_jitter_offset", "200M_jitter_offset_MCMC"):
@@ -749,10 +741,10 @@ def discover_offset_jobs():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--list", action="store_true", help="Show discovered jobs")
+    parser.add_argument("--list", action="store_true", help="Show all the discovered jobs")
     parser.add_argument("--star", type=int, help="Only plot this Gaia ID")
-    parser.add_argument("--task", type=int, help="Select one job by zero-based index")
-    parser.add_argument("--all", action="store_true", help="Plot all jobs sequentially")
+    parser.add_argument("--task", type=int, help="One job")
+    parser.add_argument("--all", action="store_true", help="All jobs")
     args = parser.parse_args()
 
     jobs = discover_offset_jobs()
@@ -764,7 +756,7 @@ def main():
             print(i, sid, run, path)
         return
     if not jobs:
-        raise FileNotFoundError("No offset posterior files found. Check joker_runs/200.0M_jitter and 200.0M_jitter directories.")
+        raise FileNotFoundError("No offset posterior files found")
 
     task_id = args.task
     if task_id is None and "SLURM_ARRAY_TASK_ID" in os.environ:
@@ -777,10 +769,9 @@ def main():
         selected = [jobs[task_id]]
     else:
         selected = jobs[:1]
-        print("No SLURM task specified: plotting first job only. Use --all for all jobs.", flush=True)
+        print("No SLURM task is specified: plotting first job only. Use --all for all jobs.", flush=True)
 
     for sid, run_name, path in selected:
-        # find_sample_file normally constructs a path; here use the actual discovered path
         jokerruns[run_name]["workpath"] = os.path.dirname(os.path.dirname(path))
         print(f"Running {sid} ({run_name}): {path}", flush=True)
         try:
